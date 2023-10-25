@@ -1,0 +1,1 @@
+insert into aliens values (101, 'Alf');
