@@ -3,53 +3,53 @@ package com.telusko.demo.controller;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.telusko.demo.dao.AlienRepository;
 import com.telusko.demo.model.Alien;
 
-@Controller
+@RestController
+@RequestMapping("/aliens")
 public class AlienController {
 	
 	@Autowired
 	AlienRepository alienRepository;
 	
-	@RequestMapping("/*")
-	public String home() {
-		return "home.jsp";
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Alien> delete(@PathVariable final int id) {
+		final Alien alien = alienRepository.findById(id).orElse(null);
+		if(alien == null) return new ResponseEntity<Alien>(HttpStatus.NOT_FOUND);
+		alienRepository.delete(alien);
+		return new ResponseEntity<Alien>(alien, HttpStatus.OK);
 	}
 	
-	@RequestMapping("/addAlien")
-	private String addAlien(Alien alien) {
+	@PostMapping(consumes = "application/json")
+	public ResponseEntity<Alien> post(@RequestBody final Alien alien) {
+		if(alienRepository.findById(alien.getId()).orElse(null) != null) {
+			return new ResponseEntity<Alien>(HttpStatus.BAD_REQUEST);
+		}
 		alienRepository.save(alien);
-		return "home.jsp";
+		return new ResponseEntity<Alien>(alien, HttpStatus.CREATED);
 	}
 	
-//	@RequestMapping("/getAlien")
-//	private ModelAndView getAlien(final int id) {
-//		ModelAndView modelAndView = new ModelAndView("showAlien.jsp");
-//		Alien alien = alienRepository.findById(id).orElse(new Alien());
-//		
-//		System.out.println(alienRepository.findAllByTech("Java"));
-//		System.out.println(alienRepository.findAllByIdGreaterThan(600));
-//		System.out.println(alienRepository.findAllByTechSorted("Java"));
-//		
-//		modelAndView.addObject(alien);
-//		return modelAndView;
-//	}
-	
-	@RequestMapping("/aliens")
-	@ResponseBody
-	private Iterable<Alien> getAliens() {
+	@GetMapping
+	public Iterable<Alien> getAll() {
 		return alienRepository.findAll();
 	}
 	
-	@RequestMapping("/aliens/{id}")
+	@GetMapping("/{id}")
 	@ResponseBody
-	private Optional<Alien> getAlien(@PathVariable final int id) {
-		return alienRepository.findById(id);
+	public ResponseEntity<Optional<Alien>> getById(@PathVariable final int id) {
+		final Optional<Alien> alien = alienRepository.findById(id);
+		return new ResponseEntity<Optional<Alien>>(alien, HttpStatus.OK);
 	}
 }
